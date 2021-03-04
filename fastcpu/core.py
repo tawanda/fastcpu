@@ -2,6 +2,8 @@ import logging
 
 __all__ = ['setup_dirs', 'find_next_script', 'safe_rename', 'ResourcePoolBase', 'ResourcePoolCPU']
 
+from datetime import datetime
+
 logger  = logging.getLogger(__name__)
 
 # Cell
@@ -37,8 +39,14 @@ def safe_rename(file, dest):
     to_name = dest / file.name
     if to_name.exists():
         u = uuid4()
-        to_name = dest / f'{file.name}-{u}'
-        warnings.warn(f'Using unique name {to_name}')
+
+        date_now = datetime.now().strftime("%c").replace(":", "-").replace(" ", "_")
+        file_name, file_extension = os.path.splitext(file.name)
+
+        to_name = dest / f'{file_name}--{date_now}--{u}-{file_extension}'
+
+        logger.warning(f'Using unique name {to_name}')
+
     file.replace(to_name)
     return to_name
 
