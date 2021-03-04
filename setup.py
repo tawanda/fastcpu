@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="fastcpu",
-    version="1.0.2",
+    version="1.0.3",
     author="Tawanda Minya",
     author_email="tminya@gmail.com",
     description="A queue service for quickly running scripts sequentially to use all your CPUs efficiently",
