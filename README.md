@@ -1,6 +1,6 @@
-# fastcpu
-
 Inspired with code from https://github.com/fastai/fastgpu 
+
+# fastcpu
 
 > A queue service for quickly developing scripts that use all your CPUs efficiently
 
