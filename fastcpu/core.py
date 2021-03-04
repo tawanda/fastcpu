@@ -43,7 +43,7 @@ def safe_rename(file, dest):
         date_now = datetime.now().strftime("%c").replace(":", "-").replace(" ", "_")
         file_name, file_extension = os.path.splitext(file.name)
 
-        to_name = dest / f'{file_name}--{date_now}--{u}-{file_extension}'
+        to_name = dest / f'{file_name}--{date_now}--{u}{file_extension}'
 
         logger.warning(f'Using unique name {to_name}')
 
