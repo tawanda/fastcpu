@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="fastcpu",
-    version="0.0.2",
+    version="0.0.4",
     author="Tawanda Minya",
     author_email="tminya@gmail.com",
     description=" A queue service for quickly developing scripts that use all your CPUs efficiently",
@@ -24,6 +24,9 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     python_requires=">=3.0",
+    install_requires=[
+        'fastcore',
+    ],
     entry_points={
         'console_scripts': [
             'fastcpu_poll=fastcpu.cli:fastcpu_poll',
