@@ -15,12 +15,12 @@ def fastcpu_poll(
         poll_interval: Param("The duration between polls", int) = 0.1,
 ):
     """
-    "Poll `path` for scripts using `ResourcePoolCPU.poll_scripts`"
+    "Monitors the path:to_run folder and runs scripts in there sequentially
 
-    usage:
+    running as module:
       python -m fastcpu.cli --help
 
-      if module installed via pip there is a command line method:
+    if module installed via pip there is a command line method:
         fastcpu_poll --help
         fastcpu_poll --path /home/tawanda/source/repos/yesplz/fastcpu/test_scripts --exit_when_empty 0 --poll_interval 60
     """
