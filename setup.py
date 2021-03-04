@@ -3,9 +3,11 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+# https://packaging.python.org/guides/distributing-packages-using-setuptools/#console-scripts
+
 setuptools.setup(
     name="fastcpu",
-    version="0.0.1",
+    version="0.0.2",
     author="Tawanda Minya",
     author_email="tminya@gmail.com",
     description=" A queue service for quickly developing scripts that use all your CPUs efficiently",
@@ -22,4 +24,9 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     python_requires=">=3.0",
+    entry_points={
+        'console_scripts': [
+            'fastcpu_poll=fastcpu.cli:fastcpu_poll',
+        ],
+    },
 )
