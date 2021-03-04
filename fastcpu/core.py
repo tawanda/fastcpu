@@ -1,5 +1,8 @@
+import logging
 
 __all__ = ['setup_dirs', 'find_next_script', 'safe_rename', 'ResourcePoolBase', 'ResourcePoolCPU']
+
+logger  = logging.getLogger(__name__)
 
 # Cell
 import os
@@ -82,6 +85,7 @@ class ResourcePoolBase():
                 return process.wait()
 
     def _run(self, script, ident):
+        logger.debug(f"running script ident: {ident}")
         failed = False
         env = copy(os.environ)
 
@@ -97,6 +101,7 @@ class ResourcePoolBase():
 
     def run(self, *args, **kwargs):
         thread = Thread(target=self._run, args=args, kwargs=kwargs)
+        logger.debug("Starting Thread..")
         thread.start()
 
     def poll_scripts(self, poll_interval=0.1, exit_when_empty=True):
@@ -105,9 +110,13 @@ class ResourcePoolBase():
             script = find_next_script(self.path / 'to_run')
             if script is None:
                 if exit_when_empty:
+                    logger.debug("No more scripts to run, exit_when_empty set to True, exiting..")
                     break
                 else:
                     continue
+
+            logger.debug(f"Script found {script}")
+
             ident = self.lock_next()
             if ident is None: continue
             run_name = safe_rename(script, self.path / 'running')

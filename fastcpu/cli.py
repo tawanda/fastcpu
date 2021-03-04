@@ -3,6 +3,8 @@ import logging
 from fastcore.script import call_parse, Param
 from .core import *
 
+logging.basicConfig(format='[%(levelname)s] %(module)s %(name)s: %(message)s', level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,6 +22,7 @@ def fastcpu_poll(
 
       if module installed via pip there is a command line method:
         fastcpu_poll --help
+        fastcpu_poll --path /home/tawanda/source/repos/yesplz/fastcpu/test_scripts --exit_when_empty 0 --poll_interval 60
     """
     logger.debug("Starting poll")
 
