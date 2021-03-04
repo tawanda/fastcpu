@@ -55,7 +55,15 @@ and the scrips are run sequentially
 ```
 
 
+`fastcpu_poll` will run each script in `to_run` in sorted order. 
+Each script will be assigned to one CPU (*future*)
 
-sdf
+Once a script is selected to be run, it is moved into a directory called `running`. Once it's finished,
+it's moved into complete or fail as appropriate. stdout and stderr are captured to files with the same name as the script,
+plus stdout or stderr appended.
+
+If exit_when_empty is 1 (which is the default), then once all scripts are run, `fastcpu_poll` will exit.
+If it is 0 then `fastcpu_poll` will continue running until it is killed; it will keep polling for any new scripts that are added to `to_run`.
+
 
 
