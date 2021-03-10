@@ -1,6 +1,8 @@
+__all__ = ['setup_dirs', 'find_next_script', 'check_if_process_running', 'safe_rename', 'ResourcePoolBase', 'ResourcePoolCPU']
+
 import logging
 
-__all__ = ['setup_dirs', 'find_next_script', 'check_if_process_running', 'safe_rename', 'ResourcePoolBase', 'ResourcePoolCPU']
+import time
 
 from datetime import datetime
 
@@ -145,47 +147,52 @@ class ResourcePoolBase():
         thread.start()
 
     def find_stale_scripts(self, terminate_timeout):
-        while True:
-            stalled = False
 
-            script = find_next_script(self.path / 'running')
-            if not script:
-                logger.debug("No more running scripts, exiting stale scripts search")
-                break
+        script = find_next_script(self.path / 'running')
 
-            proc = check_if_process_running(script.name)
-            if proc:
-                if not proc.is_running():
-                    logger.debug(f"Script {script.name} is no longer running..attempting kill")
-                    stalled = True
-                    proc.kill()
+        if not script:
+            logger.debug("No running scripts, exiting stale scripts search")
+            return
 
+        proc = check_if_process_running(script.name)
+        if proc:
+            if not proc.is_running():
+                logger.debug(f"Script {script.name} is no longer running..attempting kill")
+                proc.kill()
+                logger.debug("Process Killed for not running")
+            else:
                 if terminate_timeout > 0:
-                    if proc.create_time() > terminate_timeout:
-                        logger.warning(f"Process {script.name} has been running for {proc.create_time()} "
+                    run_duration = time.time() - proc.create_time()
+                    if run_duration > terminate_timeout:
+                        logger.warning(f"Process {script.name} has been running for {run_duration} "
                                        f"timeout set at {terminate_timeout}, killing..")
                         proc.kill()
-                        stalled = True
+                        logger.debug("Process Killed for terminate_timeout")
                     else:
-                        logger.debug(f"Process {script.name} has been running for {proc.create_time()}"
+                        logger.debug(f"Process {script.name} has been running for {run_duration}"
                                      f" timeout set at {terminate_timeout}, leaving as is..")
+                        return
                 else:
                     logger.debug("terminate_timeout not set, skipping check")
-            else:
-                logger.warning(f"Process {script.name} was not found yet script is in running folder..moving to stalled")
-                stalled = True
+                    return
+        else:
+            logger.warning(f"Process {script.name} was not found yet script is in running folder..moving to stalled")
 
-            if stalled:
-                (self.path / 'out' / f'{script.name}.exitcode').write_text("stalled")
+        # Anything that filters down to here must be moved to stalled
 
-                dest = self.path / 'stalled'
-                try:
-                    finish_name = safe_rename(script, dest)
-                except Exception as er:
-                    logger.error(f"Error trying to move script to stalled, did it move?: {er}")
+        logger.debug("Attempting to move stalled script to stalled folder")
 
-                # We only allow one processor for now so we know its processor with identity 0
-                self.unlock(ident=0)
+        (self.path / 'out' / f'{script.name}.exitcode').write_text("stalled")
+
+        dest = self.path / 'stalled'
+        try:
+            finish_name = safe_rename(script, dest)
+            logger.debug("moved file to stalled")
+        except Exception as er:
+            logger.error(f"Error trying to move script to stalled, did it move?: {er}")
+
+        # We only allow one processor for now so we know its processor with identity 0
+        self.unlock(ident=0)
 
     def poll_scripts(self, poll_interval, exit_when_empty, terminate_timeout):
         while True:
@@ -211,8 +218,17 @@ class ResourcePoolBase():
 
             ident = self.lock_next()
             if ident is None:
-                logger.debug(f"could not find available processor to process {script}")
-                continue
+                # First check if the lock is not being used
+                script = find_next_script(self.path / 'running')
+
+                if not script:
+                    logger.debug("There is a lock but no scripts in running folder, unlocking..")
+                    self.unlock(ident=0)
+                    continue
+                else:
+                    logger.debug(f"could not find available processor to process {script}")
+                    continue
+
             run_name = safe_rename(script, self.path / 'running')
             self.run(run_name, ident)
 
