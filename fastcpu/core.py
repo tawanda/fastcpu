@@ -186,7 +186,8 @@ class ResourcePoolBase():
 
     def poll_scripts(self, poll_interval, exit_when_empty, terminate_timout):
         while True:
-            logger.debug(f"Searching for stale scripts")
+            logger.debug("==================== NEW POLL ============================")
+            logger.debug("Searching for stale scripts")
             self.find_stale_scripts(terminate_timout)
 
             logger.debug(f"Sleeping for {poll_interval}")

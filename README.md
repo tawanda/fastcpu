@@ -28,6 +28,7 @@ optional arguments:
   --path PATH                        Path containing `to_run` directory (default: .)
   --exit_when_empty EXIT_WHEN_EMPTY  Exit when `to_run` is empty (default: 1)
   --poll_interval POLL_INTERVAL      The duration between polls (default: 0.1)
+  --terminate_timout                 The timeout at which point we kill the running script in seconds, -1 to never terminate
 ```
 
 If installed via pip there is a handy command line method available
