@@ -3,4 +3,5 @@ wheel
 tqdm
 twine
 fastcore
+psutil
 

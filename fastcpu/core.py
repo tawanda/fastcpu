@@ -4,6 +4,8 @@ __all__ = ['setup_dirs', 'find_next_script', 'safe_rename', 'ResourcePoolBase', 
 
 from datetime import datetime
 
+import psutil
+
 logger  = logging.getLogger(__name__)
 
 # Cell
@@ -22,7 +24,7 @@ from fastcore.all import *
 def setup_dirs(path):
     "Create and return the following subdirs of `path`: to_run running complete fail out"
     path.mkdir(exist_ok=True)
-    dirs = L(path / o for o in 'to_run running complete fail out'.split())
+    dirs = L(path / o for o in 'to_run running complete fail out stalled'.split())
     for o in dirs: o.mkdir(exist_ok=True)
     return dirs
 
@@ -32,6 +34,7 @@ def find_next_script(p):
     files = p.ls().sorted().filter(Self.is_file())
     if files:
         return files[0]
+    return None
 
 
 def safe_rename(file, dest):
@@ -49,6 +52,35 @@ def safe_rename(file, dest):
 
     file.replace(to_name)
     return to_name
+
+
+def check_if_process_running(process_name):
+    """
+    Check if there is any running process that contains the given name processName.
+    """
+    # Iterate over the all the running process
+    for proc in psutil.process_iter():
+
+        try:
+            # Check if process name contains the given name string.
+            if process_name.lower() in [p_name.lower() for p_name in proc.cmdline()]:
+                logger.debug(f"=== PROCESS FOUND ===")
+                logger.debug(f"name: {proc.name()}")
+                logger.debug(f"create_time: {proc.create_time()}")
+                logger.debug(f"is running: {proc.is_running()}")
+                logger.debug(f"cmdline: {proc.cmdline()}")
+                logger.debug(f"status: {proc.status()}")
+                return proc
+
+        except psutil.AccessDenied:
+            logger.debug("access denied")
+        except psutil.ZombieProcess:
+            logger.debug("Zombie process")
+        except psutil.NoSuchProcess:
+            logger.debug("No such process")
+
+    logger.debug("Process not found returning None")
+    return None
 
 
 class ResourcePoolBase():
@@ -112,21 +144,70 @@ class ResourcePoolBase():
         logger.debug("Starting Thread..")
         thread.start()
 
-    def poll_scripts(self, poll_interval=0.1, exit_when_empty=True):
+    def find_stale_scripts(self, terminate_timout):
         while True:
+            stalled = False
+
+            script = find_next_script(self.path / 'running')
+            if not script:
+                logger.debug("No more running scripts, exiting stale scripts search")
+                break
+
+            proc = check_if_process_running(script.name)
+            if proc:
+                if not proc.is_running():
+                    logger.debug(f"Script {script.name} is no longer running..attempting kill")
+                    stalled = True
+                    proc.kill()
+
+                if terminate_timout > 0:
+                    if proc.create_time() > terminate_timout:
+                        logger.warning(f"Process {script.name} has been running for {proc.create_time()} "
+                                       f"timeout set at {terminate_timout}, killing..")
+                        proc.kill()
+                        stalled = True
+                    else:
+                        logger.debug(f"Process {script.name} has been running for {proc.create_time()}"
+                                     f" timeout set at {terminate_timout}, leaving as is..")
+                else:
+                    logger.debug("terminate_timeout not set, skipping check")
+            else:
+                logger.warning(f"Process {script.name} was no found yet script is in running folder..moving to stalled")
+                stalled = True
+
+            if stalled:
+                (self.path / 'out' / f'{script.name}.exitcode').write_text("stalled")
+
+                dest = self.path / 'stalled'
+                finish_name = safe_rename(script, dest)
+
+                # We only allow one processor for now so we know its processor with identity 0
+                self.unlock(ident=0)
+
+    def poll_scripts(self, poll_interval, exit_when_empty, terminate_timout):
+        while True:
+            logger.debug(f"Searching for stale scripts")
+            self.find_stale_scripts(terminate_timout)
+
+            logger.debug(f"Sleeping for {poll_interval}")
             sleep(poll_interval)
+
             script = find_next_script(self.path / 'to_run')
+
             if script is None:
+                logger.debug("No scripts found in to_run folder")
                 if exit_when_empty:
                     logger.debug("No more scripts to run, exit_when_empty set to True, exiting..")
                     break
                 else:
                     continue
 
-            logger.debug(f"Script found {script}")
+            logger.debug(f"Script found in to_run folder {script}")
 
             ident = self.lock_next()
-            if ident is None: continue
+            if ident is None:
+                logger.debug(f"could not find available processor to process {script}")
+                continue
             run_name = safe_rename(script, self.path / 'running')
             self.run(run_name, ident)
 
@@ -159,8 +240,8 @@ class ResourcePoolCPU(ResourcePoolBase):
     "Vends locked access to NVIDIA GPUs"
 
     def __init__(self, path):
-        # assume a 2 core processor, these are fake id's to be implemented properly
-        self.ids = [0, 1]
+        # assume a 1 core processor, these are fake id's to be implemented properly
+        self.ids = [0]
         super().__init__(path)
 
     def _launch(self, script, ident, env):

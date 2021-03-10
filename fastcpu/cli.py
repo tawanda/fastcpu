@@ -13,6 +13,8 @@ def fastcpu_poll(
         path: Param("Path containing `to_run` directory", str) = '.',
         exit_when_empty: Param("Exit when `to_run` is empty", int) = 1,
         poll_interval: Param("The duration between polls", int) = 0.1,
+        terminate_timout: Param("The timeout at which point we kill the running script in seconds,"
+                                " -1 to never terminate", int) = -1,
 ):
     """
     "Monitors the path:to_run folder and runs scripts in there sequentially
@@ -24,8 +26,8 @@ def fastcpu_poll(
         fastcpu_poll --help
         fastcpu_poll --path /home/tawanda/source/repos/yesplz/fastcpu/test_scripts --exit_when_empty 0 --poll_interval 60
     """
-    logger.debug("Starting poll")
+    logger.debug("Starting poll process")
 
     rp = ResourcePoolCPU(path=path)
-    rp.poll_scripts(exit_when_empty=exit_when_empty, poll_interval=poll_interval)
+    rp.poll_scripts(exit_when_empty=exit_when_empty, poll_interval=poll_interval, terminate_timout=terminate_timout)
 
