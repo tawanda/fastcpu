@@ -37,7 +37,7 @@ If installed via pip there is a handy command line method available
 
 If running as a module 
 
-`python -m fastcpu.cliu --path /path/to/scripts --exit_when_empty 0 --poll_interval 60` 
+`python -m fastcpu.cli --path /path/to/scripts --exit_when_empty 0 --poll_interval 60` 
 
 The above examples will run scrips located in the to_run subdirectory of the directory being monitored
 The program will not exit when there are no scripts left to run, it will keep polling since we set that to 0

@@ -1,6 +1,6 @@
 import logging
 
-__all__ = ['setup_dirs', 'find_next_script', 'safe_rename', 'ResourcePoolBase', 'ResourcePoolCPU']
+__all__ = ['setup_dirs', 'find_next_script', 'check_if_process_running', 'safe_rename', 'ResourcePoolBase', 'ResourcePoolCPU']
 
 from datetime import datetime
 
@@ -125,7 +125,7 @@ class ResourcePoolBase():
                 return process.wait()
 
     def _run(self, script, ident):
-        logger.debug(f"running script ident: {ident}")
+        logger.debug(f"running script on processor with ident: {ident}")
         failed = False
         env = copy(os.environ)
 
@@ -144,7 +144,7 @@ class ResourcePoolBase():
         logger.debug("Starting Thread..")
         thread.start()
 
-    def find_stale_scripts(self, terminate_timout):
+    def find_stale_scripts(self, terminate_timeout):
         while True:
             stalled = False
 
@@ -160,15 +160,15 @@ class ResourcePoolBase():
                     stalled = True
                     proc.kill()
 
-                if terminate_timout > 0:
-                    if proc.create_time() > terminate_timout:
+                if terminate_timeout > 0:
+                    if proc.create_time() > terminate_timeout:
                         logger.warning(f"Process {script.name} has been running for {proc.create_time()} "
-                                       f"timeout set at {terminate_timout}, killing..")
+                                       f"timeout set at {terminate_timeout}, killing..")
                         proc.kill()
                         stalled = True
                     else:
                         logger.debug(f"Process {script.name} has been running for {proc.create_time()}"
-                                     f" timeout set at {terminate_timout}, leaving as is..")
+                                     f" timeout set at {terminate_timeout}, leaving as is..")
                 else:
                     logger.debug("terminate_timeout not set, skipping check")
             else:
@@ -179,19 +179,23 @@ class ResourcePoolBase():
                 (self.path / 'out' / f'{script.name}.exitcode').write_text("stalled")
 
                 dest = self.path / 'stalled'
-                finish_name = safe_rename(script, dest)
+                try:
+                    finish_name = safe_rename(script, dest)
+                except Exception as er:
+                    logger.error(f"Error trying to move script to stalled, did it move?: {er}")
 
                 # We only allow one processor for now so we know its processor with identity 0
                 self.unlock(ident=0)
 
-    def poll_scripts(self, poll_interval, exit_when_empty, terminate_timout):
+    def poll_scripts(self, poll_interval, exit_when_empty, terminate_timeout):
         while True:
             logger.debug("==================== NEW POLL ============================")
-            logger.debug("Searching for stale scripts")
-            self.find_stale_scripts(terminate_timout)
 
             logger.debug(f"Sleeping for {poll_interval}")
             sleep(poll_interval)
+
+            logger.debug("Searching for stale scripts")
+            self.find_stale_scripts(terminate_timeout)
 
             script = find_next_script(self.path / 'to_run')
 
@@ -221,7 +225,8 @@ add_docs(ResourcePoolBase, "Base class for locked access to list of idents",
          find_next="Finds next available resource, or None",
          lock_next="Locks an available resource and returns its ident, or None",
          run="Run `script` using resource `ident`",
-         poll_scripts="Poll `to_run` for scripts and run in parallel on available resources")
+         poll_scripts="Poll `to_run` for scripts and run in parallel on available resources",
+         find_stale_scripts="Move out stale scripts")
 
 
 # class FixedWorkerPool(ResourcePoolBase):

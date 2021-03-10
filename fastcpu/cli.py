@@ -13,7 +13,7 @@ def fastcpu_poll(
         path: Param("Path containing `to_run` directory", str) = '.',
         exit_when_empty: Param("Exit when `to_run` is empty", int) = 1,
         poll_interval: Param("The duration between polls", int) = 0.1,
-        terminate_timout: Param("The timeout at which point we kill the running script in seconds,"
+        terminate_timeout: Param("The timeout at which point we kill the running script in seconds,"
                                 " -1 to never terminate", int) = -1,
 ):
     """
@@ -29,5 +29,5 @@ def fastcpu_poll(
     logger.debug("Starting poll process")
 
     rp = ResourcePoolCPU(path=path)
-    rp.poll_scripts(exit_when_empty=exit_when_empty, poll_interval=poll_interval, terminate_timout=terminate_timout)
+    rp.poll_scripts(exit_when_empty=exit_when_empty, poll_interval=poll_interval, terminate_timout=terminate_timeout)
 
