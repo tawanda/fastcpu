@@ -69,4 +69,12 @@ If exit_when_empty is 1 (which is the default), then once all scripts are run, `
 If it is 0 then `fastcpu_poll` will continue running until it is killed; it will keep polling for any new scripts that are added to `to_run`.
 
 
+# Development
 
+### local testing
+
+`python -m fastcpu.cli --path test_scripts --exit_when_empty 1 --poll_interval 5 --terminate_timeout 12`
+
+## Troubleshooting
+
+If you get permission denied error in stderr logs check that your scripts are executable 

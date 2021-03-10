@@ -63,7 +63,7 @@ def check_if_process_running(process_name):
 
         try:
             # Check if process name contains the given name string.
-            if process_name.lower() in [p_name.lower() for p_name in proc.cmdline()]:
+            if any([process_name.lower() in p.lower() for p in proc.cmdline()]):  # or '/bin/sh' in proc.cmdline()):
                 logger.debug(f"=== PROCESS FOUND ===")
                 logger.debug(f"name: {proc.name()}")
                 logger.debug(f"create_time: {proc.create_time()}")
@@ -172,7 +172,7 @@ class ResourcePoolBase():
                 else:
                     logger.debug("terminate_timeout not set, skipping check")
             else:
-                logger.warning(f"Process {script.name} was no found yet script is in running folder..moving to stalled")
+                logger.warning(f"Process {script.name} was not found yet script is in running folder..moving to stalled")
                 stalled = True
 
             if stalled:

@@ -23,11 +23,11 @@ def fastcpu_poll(
       python -m fastcpu.cli --help
 
     if module installed via pip there is a command line method:
-        fastcpu_poll --help
-        fastcpu_poll --path /home/tawanda/source/repos/yesplz/fastcpu/test_scripts --exit_when_empty 0 --poll_interval 60
+      fastcpu_poll --help
+      fastcpu_poll --path /home/tawanda/source/repos/yesplz/fastcpu/test_scripts --exit_when_empty 0 --poll_interval 60
     """
     logger.debug("Starting poll process")
 
     rp = ResourcePoolCPU(path=path)
-    rp.poll_scripts(exit_when_empty=exit_when_empty, poll_interval=poll_interval, terminate_timout=terminate_timeout)
+    rp.poll_scripts(exit_when_empty=exit_when_empty, poll_interval=poll_interval, terminate_timeout=terminate_timeout)
 
