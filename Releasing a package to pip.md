@@ -36,3 +36,8 @@ Then
 python -m twine upload dist/*
 ```
 
+# Locally testing the package in another project without uploading to pypy
+
+```
+python -m pip install --user fastcpu/dist/fastcpu-1.5.0.tar.gz
+```
